@@ -4,7 +4,10 @@ import hashlib
 import time
 import json
 import os
-from mcp.server import FastMCP
+try:
+    from mcp.server import FastMCP
+except ImportError:
+    from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
 
 # 加载环境变量
