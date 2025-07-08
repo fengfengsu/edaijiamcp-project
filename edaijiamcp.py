@@ -1,18 +1,26 @@
-from typing import Any
+from typing import Any, Dict, Optional
 import httpx
 import hashlib
 import time
 import json
-from typing import Dict, Any, Optional
-from mcp.server.fastmcp import FastMCP
+import os
+from mcp.server import FastMCP
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
 
 # Initialize FastMCP server
 mcp = FastMCP("edaijiamcp")
 
 # e代驾API配置
-API_BASE_URL = "https://openapi.d.edaijia.cn"
-APP_KEY = "61000158"
-SECRET = "0031186e-5cc6-45a6-a090-3e88ec220452"
+API_BASE_URL = os.getenv("API_BASE_URL", "https://openapi.d.edaijia.cn")
+APP_KEY = os.getenv("APP_KEY")
+SECRET = os.getenv("SECRET")
+
+# 检查必要的环境变量
+if not APP_KEY or not SECRET:
+    raise ValueError("请在.env文件中设置APP_KEY和SECRET环境变量")
 
 def generate_signature(params: Dict[str, Any]) -> str:
     """生成API签名"""
@@ -25,7 +33,8 @@ def generate_signature(params: Dict[str, Any]) -> str:
     param_str = '&'.join([f"{k}={v}" for k, v in sorted_params])
     
     # 添加secret并生成MD5签名
-    sign_str = param_str + "&secret=" + SECRET
+    # 使用字符串格式化避免None类型的拼接问题
+    sign_str = f"{param_str}&secret={SECRET}"
     signature = hashlib.md5(sign_str.encode('utf-8')).hexdigest()
     
     return signature
@@ -200,7 +209,9 @@ async def check_order_status(order_id: str) -> str:
             elif status == 'driving':
                 response += "\n行程进行中，请系好安全带"
             elif status == 'completed':
-                response += "\n行程已完成，感谢使用e代驾服务！"
+                response += "\n订单已完成，感谢使用e代驾服务！"
+            elif status == 'cancelled':
+                response += "\n订单已取消"
             
             return response
         else:
@@ -211,7 +222,7 @@ async def check_order_status(order_id: str) -> str:
 
 @mcp.tool()
 async def cancel_order(order_id: str, reason: str = "") -> str:
-    """取消订单
+    """取消代驾订单
     
     Args:
         order_id: 订单号
@@ -242,4 +253,4 @@ async def cancel_order(order_id: str, reason: str = "") -> str:
 
 if __name__ == "__main__":
     # Initialize and run the server
-    mcp.run(transport='stdio')
+    mcp.run()

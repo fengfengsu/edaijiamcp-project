@@ -10,11 +10,23 @@
 - **状态跟踪**: 实时查询订单状态（等待接单、司机接单、司机就位、行程中、订单完成等）
 - **订单取消**: 取消已创建的订单
 
-## API配置
+## 环境配置
 
-- **API地址**: https://openapi.d.edaijia.cn
-- **AppKey**: 61000158
-- **Secret**: 0031186e-5cc6-45a6-a090-3e88ec220452
+### 1. 创建环境变量文件
+复制 `.env.example` 文件为 `.env`：
+```bash
+cp .env.example .env
+```
+
+### 2. 配置API密钥
+在 `.env` 文件中设置您的API密钥：
+```
+APP_KEY=your_app_key_here
+SECRET=your_secret_here
+API_BASE_URL=https://openapi.d.edaijia.cn
+```
+
+**注意**: `.env` 文件包含敏感信息，已被添加到 `.gitignore` 中，不会被提交到版本控制系统。
 
 ## 可用工具
 
@@ -80,5 +92,6 @@ python edaijiamcp.py
 
 - httpx: HTTP客户端库
 - mcp: Model Context Protocol库
+- python-dotenv: 环境变量管理
 - hashlib: 用于生成API签名
 - time: 用于时间戳生成
