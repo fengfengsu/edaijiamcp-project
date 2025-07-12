@@ -4,11 +4,11 @@
 
 ## 功能特性
 
-- **用户叫代驾**: 收集用户手机号和出发地信息
-- **距离计算**: 计算出发地到目的地的距离和预估价格
-- **订单创建**: 创建代驾订单
-- **状态跟踪**: 实时查询订单状态（等待接单、司机接单、司机就位、行程中、订单完成等）
-- **订单取消**: 取消已创建的订单
+- **预估费用**: 根据起终点位置预估代驾费用
+- **叫代驾下单**: 创建代驾订单，支持自动token管理
+- **Token管理**: 智能token获取、存储和刷新机制
+- **自动重试**: token过期时自动刷新并重试操作
+- **参数验证**: 完善的输入参数验证和错误处理
 
 ## 环境配置
 
@@ -30,57 +30,60 @@ API_BASE_URL=https://openapi.d.edaijia.cn
 
 ## 可用工具
 
-### 1. call_driver
-用户叫代驾服务
+### 1. estimate_cost
+预估代驾费用
 - **参数**: 
+  - `start_address`: 起始地址
+  - `start_longitude`: 起始经度
+  - `start_latitude`: 起始纬度
+  - `end_address`: 目的地地址
+  - `end_longitude`: 目的地经度
+  - `end_latitude`: 目的地纬度
   - `phone`: 用户手机号（11位数字）
-  - `departure`: 出发地地址
-- **返回**: 提示信息，引导用户提供目的地以获取价格预估
+- **返回**: 预估费用信息，包括距离、时间和价格
+- **特性**: 自动检查和刷新token，支持token过期重试
 
-### 2. calculate_distance_and_price
-计算两地距离并显示代驾预估价格
+### 2. call_driver
+叫代驾下单
 - **参数**:
-  - `departure`: 出发地地址
-  - `destination`: 目的地地址
-- **返回**: 距离、预估时间和价格信息
+  - `start_address`: 起始地址
+  - `start_longitude`: 起始经度
+  - `start_latitude`: 起始纬度
+  - `end_address`: 目的地地址
+  - `end_longitude`: 目的地经度
+  - `end_latitude`: 目的地纬度
+  - `phone`: 用户手机号（11位数字）
+  - `contact_phone`: 联系电话（可选，代叫订单必传）
+- **返回**: 下单结果，包括订单号和状态
+- **特性**: 自动生成唯一订单号，支持token校验失败重试
 
-### 3. create_order
-创建代驾订单
+### 3. refresh_token
+刷新用户token
 - **参数**:
   - `phone`: 用户手机号（11位数字）
-  - `departure`: 出发地地址
-  - `destination`: 目的地地址（可选）
-- **返回**: 订单创建结果和订单号
+- **返回**: token刷新结果和状态
+- **特性**: 手动刷新指定手机号的认证token
 
-### 4. check_order_status
-查询订单实时状态
-- **参数**:
-  - `order_id`: 订单号
-- **返回**: 订单详细状态信息，包括司机信息（如有）
+## Token管理机制
 
-### 5. cancel_order
-取消订单
-- **参数**:
-  - `order_id`: 订单号
-  - `reason`: 取消原因（可选）
-- **返回**: 取消结果
-
-## 订单状态说明
-
-- **等待接单**: 订单已创建，等待司机接单
-- **司机已接单**: 司机已接受订单，正在前往出发地
-- **司机已就位**: 司机已到达出发地，等待用户上车
-- **行程中**: 代驾服务进行中
-- **订单完成**: 代驾服务已完成
-- **订单取消**: 订单已被取消
+- **自动检测**: 系统自动检查本地是否存在对应手机号的token
+- **智能获取**: 如无本地token，自动调用API获取新token
+- **本地存储**: token自动保存到 `edjserver/tokens/` 目录
+- **过期处理**: API返回token过期时自动刷新并重试
+- **校验重试**: token校验失败时自动刷新token并重新执行操作
 
 ## 使用流程
 
-1. **叫代驾**: 使用 `call_driver` 提供手机号和出发地
-2. **查看价格**: 使用 `calculate_distance_and_price` 查看距离和预估价格
-3. **创建订单**: 使用 `create_order` 创建正式订单
-4. **跟踪状态**: 使用 `check_order_status` 实时查询订单状态
-5. **取消订单**: 如需取消，使用 `cancel_order`
+1. **预估费用**: 使用 `estimate_cost` 提供起终点信息和手机号，获取预估价格
+2. **确认下单**: 使用 `call_driver` 提供相同信息进行下单
+3. **Token管理**: 如需要，使用 `refresh_token` 手动刷新token
+
+## 技术特性
+
+- **智能重试**: token相关错误自动处理，无需手动干预
+- **参数验证**: 完善的输入验证，确保数据格式正确
+- **错误处理**: 详细的错误信息返回，便于问题定位
+- **唯一订单号**: 基于时间戳和UUID生成唯一订单标识
 
 ## 运行方式
 
@@ -90,8 +93,24 @@ python edaijiamcp.py
 
 ## 依赖项
 
-- httpx: HTTP客户端库
-- mcp: Model Context Protocol库
-- python-dotenv: 环境变量管理
-- hashlib: 用于生成API签名
-- time: 用于时间戳生成
+- **mcp**: Model Context Protocol库
+- **requests**: HTTP请求库
+- **python-dotenv**: 环境变量管理
+- **uuid**: 唯一标识符生成
+- **time**: 时间戳生成
+- **json**: JSON数据处理
+- **os**: 文件系统操作
+
+## 项目结构
+
+```
+edaijiamcp/
+├── edaijiamcp.py          # MCP服务主文件
+├── edjserver/             # e代驾API封装
+│   ├── EdjApi.py         # 主要API接口
+│   ├── EdjSignUtils.py   # 签名工具
+│   ├── EdjSystemParams.py # 系统参数
+│   └── tokens/           # token存储目录
+├── README.md             # 项目文档
+└── pyproject.toml        # 项目配置
+```
