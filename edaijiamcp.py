@@ -9,12 +9,13 @@ try:
     from mcp.server.fastmcp import FastMCP
 except ImportError:
     try:
-        from mcp.server.models import FastMCP
+        from fastmcp import FastMCP
     except ImportError:
         try:
-            from mcp.server import FastMCP
-        except ImportError:
             from mcp import FastMCP
+        except ImportError:
+            # 如果都无法导入，使用基础的MCP服务器
+            from mcp.server import Server as FastMCP
 from dotenv import load_dotenv
 from edjserver.EdjApi import EdjApi
 
