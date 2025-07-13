@@ -217,4 +217,12 @@ def refresh_token(phone: str) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Initialize and run the server
-    mcp.run()
+    mcp.run(
+        transport='sse',
+        read_stream=None,  # 默认使用标准输入
+        write_stream=None,  # 默认使用标准输出
+        initialization_options={
+            "name": "edaijiamcp",
+            "version": "1.0.0"
+        }
+    )
