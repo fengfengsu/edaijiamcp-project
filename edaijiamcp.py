@@ -207,4 +207,4 @@ def refresh_token(phone: str) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Initialize and run the server
-    mcp.run()
+    mcp.run(transport='sse')
