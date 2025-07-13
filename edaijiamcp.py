@@ -5,17 +5,7 @@ import time
 import json
 import os
 import uuid
-try:
-    from mcp.server.fastmcp import FastMCP
-except ImportError:
-    try:
-        from fastmcp import FastMCP
-    except ImportError:
-        try:
-            from mcp import FastMCP
-        except ImportError:
-            # 如果都无法导入，使用基础的MCP服务器
-            from mcp.server import Server as FastMCP
+from fastmcp import FastMCP
 from dotenv import load_dotenv
 from edjserver.EdjApi import EdjApi
 
@@ -217,12 +207,4 @@ def refresh_token(phone: str) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Initialize and run the server
-    mcp.run(
-        transport='sse',
-        read_stream=None,  # 默认使用标准输入
-        write_stream=None,  # 默认使用标准输出
-        initialization_options={
-            "name": "edaijiamcp",
-            "version": "1.0.0"
-        }
-    )
+    mcp.run()
